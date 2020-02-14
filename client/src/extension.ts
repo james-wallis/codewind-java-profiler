@@ -10,6 +10,7 @@ import {
 	LanguageClient,
 	LanguageClientOptions,
 	StreamInfo,
+	DidChangeWorkspaceFoldersNotification,
 } from 'vscode-languageclient';
 import { promisify } from 'util';
 
@@ -39,7 +40,11 @@ export async function activate(context: ExtensionContext) {
 	clientServer.listen(clientPort);
 
 	// start docker container
-	const dockerBinds = workspace.workspaceFolders.map(wsFolder => `${wsFolder.uri.toString(true).replace('file://', '')}:/profiling/${wsFolder.name}`);
+
+	console.log('workspaceFolders = ');
+	workspace.workspaceFolders.forEach(a => console.log(a));
+	console.log('ended');
+	const dockerBinds = workspace.workspaceFolders.map(wsFolder => `${wsFolder.uri.toString(true).replace('%3A', '').replace('file://', '')}:/profiling/${wsFolder.name}`);
 	dockerBinds.forEach(a => console.log(a));
 
 	let serverOptions = () => startServerDockerContainer(dockerBinds);
@@ -50,7 +55,7 @@ export async function activate(context: ExtensionContext) {
 		documentSelector: [{ scheme: 'file', language: 'java' }],
 		synchronize: {
 			// Notify the server about file changes to '.hdc files contained in the workspace
-			fileEvents: workspace.createFileSystemWatcher('**/*.hdc')
+			fileEvents: workspace.createFileSystemWatcher('**/*.hcd')
 		}
 	};
 
@@ -73,16 +78,17 @@ async function startServerDockerContainer(dockerBinds: string[]) {
 		// don't care if already removed
 	}
 
-	try {
-		console.log(`Trying to pull image ${dockerFullImageName}`);
+	// try {
+	// 	console.log(`Trying to pull image ${dockerFullImageName}`);
 
-		await pullDockerImage();
-		console.log('Pull completed!');
-	} catch (error) {
-		console.log('Pull failed, building from local Dockerfile');
-		await buildLocalDockerImage();
-		console.log(error);
-	}
+	// 	await pullDockerImage();
+	// 	console.log('Pull completed!');
+	// } catch (error) {
+	// 	console.log('Pull failed, building from local Dockerfile');
+	// 	await buildLocalDockerImage();
+	// 	console.log(error);
+	// }
+	await buildLocalDockerImage();
 	await startContainer(dockerBinds);
 
 	setupConnectionListeners();
@@ -147,10 +153,11 @@ async function removeExistingContainer() {
 }
 
 async function startContainer(dockerBinds: string[]) {
+	console.log(`CLIENT_PORT=${clientPort}, CLIENT_HOST=${ip.address()}, BINDS="${dockerBinds}"`);
 	const container = await docker.createContainer({
 		Image: dockerFullImageName,
 		name: dockerImage,
-		Env: [`CLIENT_PORT=${clientPort}`, `CLIENT_HOST=${ip.address()}`, `BINDS="${dockerBinds}"`],
+		Env: [`CLIENT_PORT=${clientPort}`, `CLIENT_HOST=9.140.96.13`, `BINDS="${dockerBinds}"`],
 		HostConfig: {
 			Binds: dockerBinds
 		}
