@@ -5,9 +5,10 @@
 
 import * as path from 'path';
 import * as net from 'net';
-import { workspace,
-		 ExtensionContext,
-		 WorkspaceFolder
+import { 
+    workspace,
+    ExtensionContext,
+    WorkspaceFolder
 } from 'vscode';
 import {
 	LanguageClient,
@@ -36,11 +37,11 @@ let serverConnected = false;
 let connectionSocket;
 
 function workspaceFolderToDockerBind(wsFolder: WorkspaceFolder): string {
-	let folderUriString = wsFolder.uri.toString(true);
-	if (onWin) {
-		folderUriString = folderUriString.replace('%3A', '').replace('file://', '');
-	}
-	return `${folderUriString}:/profiling/${wsFolder.name}`;
+    let folderUriString = wsFolder.uri.toString(true);
+    if (onWin) {
+        folderUriString = folderUriString.replace('%3A', '').replace('file://', '');
+    }
+    return `${folderUriString}:/profiling/${wsFolder.name}`;
 }
 
 export async function activate(context: ExtensionContext) {
